@@ -33,6 +33,7 @@ public class TransportOptions implements Cloneable {
     public static final boolean DEFAULT_USE_EPOLL = true;
     public static final boolean DEFAULT_USE_KQUEUE = false;
     public static final boolean DEFAULT_TRACE_BYTES = false;
+    private static final String DEFAULT_AUTH_HEADER = null;
 
     private int sendBufferSize = DEFAULT_SEND_BUFFER_SIZE;
     private int receiveBufferSize = DEFAULT_RECEIVE_BUFFER_SIZE;
@@ -46,6 +47,7 @@ public class TransportOptions implements Cloneable {
     private boolean useEpoll = DEFAULT_USE_EPOLL;
     private boolean useKQueue = DEFAULT_USE_KQUEUE;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
+    private String authHeader = DEFAULT_AUTH_HEADER;
 
     /**
      * @return the currently set send buffer size in bytes.
@@ -219,7 +221,15 @@ public class TransportOptions implements Cloneable {
         this.traceBytes = traceBytes;
     }
 
-    @Override
+    public String getAuthHeader() {
+        return authHeader;
+    }
+
+    public void setAuthHeader(String authHeader) {
+        this.authHeader = authHeader;
+    }
+
+  @Override
     public TransportOptions clone() {
         return copyOptions(new TransportOptions());
     }
@@ -240,6 +250,7 @@ public class TransportOptions implements Cloneable {
         copy.setDefaultTcpPort(getDefaultTcpPort());
         copy.setUseEpoll(isUseEpoll());
         copy.setTraceBytes(isTraceBytes());
+        copy.setAuthHeader(getAuthHeader());
 
         return copy;
     }
