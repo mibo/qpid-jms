@@ -33,7 +33,14 @@ public class TransportOptions implements Cloneable {
     public static final boolean DEFAULT_USE_EPOLL = true;
     public static final boolean DEFAULT_USE_KQUEUE = false;
     public static final boolean DEFAULT_TRACE_BYTES = false;
-    private static final String DEFAULT_AUTH_HEADER = null;
+    public static final String DEFAULT_AUTH_HEADER = null;
+    public static final String DEFAULT_OA2_GRANT_TYPE = null;
+    public static final String DEFAULT_OA2_TOKEN_ENDPOINT = null;
+    public static final String DEFAULT_OA2_CLIENT_ID = null;
+    public static final String DEFAULT_OA2_CLIENT_SECRET = null;
+    public static final String DEFAULT_OA2_USER = null;
+    public static final String DEFAULT_OA2_PASSWORD = null;
+
 
     private int sendBufferSize = DEFAULT_SEND_BUFFER_SIZE;
     private int receiveBufferSize = DEFAULT_RECEIVE_BUFFER_SIZE;
@@ -48,8 +55,14 @@ public class TransportOptions implements Cloneable {
     private boolean useKQueue = DEFAULT_USE_KQUEUE;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
     private String authHeader = DEFAULT_AUTH_HEADER;
+    private String oAuthGrantType = DEFAULT_OA2_GRANT_TYPE;
+    private String oAuthTokenEndpoint = DEFAULT_OA2_TOKEN_ENDPOINT;
+    private String oAuthClientId = DEFAULT_OA2_CLIENT_ID;
+    private String oAuthClientSecret = DEFAULT_OA2_CLIENT_SECRET;
+    private String oAuthPassword = DEFAULT_OA2_PASSWORD;
+    private String oAuthUser = DEFAULT_OA2_USER;
 
-    /**
+  /**
      * @return the currently set send buffer size in bytes.
      */
     public int getSendBufferSize() {
@@ -229,7 +242,57 @@ public class TransportOptions implements Cloneable {
         this.authHeader = authHeader;
     }
 
-  @Override
+
+    public String getOAuthGrantType() {
+        return oAuthGrantType;
+    }
+
+    public void setOAuthGrantType(String oAuthGrantType) {
+        this.oAuthGrantType = oAuthGrantType;
+    }
+
+    public String getOAuthTokenEndpoint() {
+        return oAuthTokenEndpoint;
+    }
+
+    public void setOAuthTokenEndpoint(String oAuthEndpoint) {
+        this.oAuthTokenEndpoint = oAuthEndpoint;
+    }
+
+    public String getOAuthClientId() {
+        return oAuthClientId;
+    }
+
+    public void setOAuthClientId(String oAuthClientId) {
+        this.oAuthClientId = oAuthClientId;
+    }
+
+    public String getOAuthClientSecret() {
+        return oAuthClientSecret;
+    }
+
+    public void setOAuthClientSecret(String oAuthClientSecret) {
+        this.oAuthClientSecret = oAuthClientSecret;
+    }
+
+
+    public String getOAuthPassword() {
+        return oAuthPassword;
+    }
+
+    public void setOAuthPassword(String oAuthPassword) {
+        this.oAuthPassword = oAuthPassword;
+    }
+
+    public String getOAuthUser() {
+        return oAuthUser;
+    }
+
+    public void setOAuthUser(String oAuthUser) {
+        this.oAuthUser = oAuthUser;
+    }
+
+    @Override
     public TransportOptions clone() {
         return copyOptions(new TransportOptions());
     }
@@ -251,6 +314,12 @@ public class TransportOptions implements Cloneable {
         copy.setUseEpoll(isUseEpoll());
         copy.setTraceBytes(isTraceBytes());
         copy.setAuthHeader(getAuthHeader());
+        copy.setOAuthGrantType(getOAuthGrantType());
+        copy.setOAuthTokenEndpoint(getOAuthTokenEndpoint());
+        copy.setOAuthClientId(getOAuthClientId());
+        copy.setOAuthClientSecret(getOAuthClientSecret());
+        copy.setOAuthUser(getOAuthUser());
+        copy.setOAuthPassword(getOAuthPassword());
 
         return copy;
     }

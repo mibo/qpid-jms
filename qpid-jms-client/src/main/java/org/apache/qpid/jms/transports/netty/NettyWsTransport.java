@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.jms.transports.TransportListener;
 import org.apache.qpid.jms.transports.TransportOptions;
+import org.apache.qpid.jms.transports.oauth.OAuthHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,25 +112,52 @@ public class NettyWsTransport extends NettyTcpTransport {
     //----- Handle connection events -----------------------------------------//
 
     private class NettyWebSocketTransportHandler extends NettyDefaultHandler<Object> {
+        private static final String AUTHORIZATION_HEADER = "Authorization";
+        private WebSocketClientHandshaker wsClientHandshaker;
 
-        private final WebSocketClientHandshaker handshaker;
-
-        public NettyWebSocketTransportHandler() {
-            String authHeader = getTransportOptions().getAuthHeader();
-            DefaultHttpHeaders defHeaders = new DefaultHttpHeaders();
-            if(authHeader != null) {
-              defHeaders.add("Authorization", authHeader);
+        private synchronized WebSocketClientHandshaker grantHandshaker() throws IOException {
+            if(wsClientHandshaker == null) {
+                String authHeader = getTransportOptions().getAuthHeader();
+                DefaultHttpHeaders defHeaders = new DefaultHttpHeaders();
+                if(authHeader != null) {
+                    defHeaders.add(AUTHORIZATION_HEADER, authHeader);
+                } else if(isOAuthRequested(getTransportOptions())) {
+                    OAuthHandler oAuthHandler = new OAuthHandler(getTransportOptions());
+                    String token = oAuthHandler.doTokenRequest();
+                    defHeaders.add(AUTHORIZATION_HEADER, token);
+                }
+                LOG.trace("Initialized 'wsClientHandshaker' {} authorization header.",
+                    defHeaders.isEmpty()? "without": "with");
+                wsClientHandshaker = WebSocketClientHandshakerFactory.newHandshaker(
+                    getRemoteLocation(), WebSocketVersion.V13, AMQP_SUB_PROTOCOL,
+                    true, defHeaders, getMaxFrameSize());
             }
-            handshaker = WebSocketClientHandshakerFactory.newHandshaker(
-                getRemoteLocation(), WebSocketVersion.V13, AMQP_SUB_PROTOCOL,
-                true, defHeaders, getMaxFrameSize());
+            return wsClientHandshaker;
+        }
+
+        private boolean isOAuthRequested(TransportOptions transportOptions) {
+            return transportOptions.getOAuthGrantType() != null;
         }
 
         @Override
         public void channelActive(ChannelHandlerContext context) throws Exception {
-            handshaker.handshake(context.channel());
+            grantHandshaker().handshake(context.channel());
 
             super.channelActive(context);
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext context) throws Exception {
+            LOG.trace("Channel inactive, reset 'wsClientHandshaker'.");
+            wsClientHandshaker = null;
+            super.channelInactive(context);
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+            LOG.trace("Exception caught, reset 'wsClientHandshaker'.");
+            wsClientHandshaker = null;
+            super.exceptionCaught(context, cause);
         }
 
         @Override
@@ -137,6 +165,7 @@ public class NettyWsTransport extends NettyTcpTransport {
             LOG.trace("New data read: incoming: {}", message);
 
             Channel ch = ctx.channel();
+            WebSocketClientHandshaker handshaker = grantHandshaker();
             if (!handshaker.isHandshakeComplete()) {
                 handshaker.finishHandshake(ch, (FullHttpResponse) message);
                 LOG.trace("WebSocket Client connected! {}", ctx.channel());
